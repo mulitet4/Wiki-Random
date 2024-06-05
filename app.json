@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "True-Do-App",
-    "slug": "True-Do-App",
+    "name": "Wiki-Random",
+    "slug": "Wiki-Random",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "scheme": "true-do-scheme",
+    "scheme": "wiki-random-scheme",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -23,20 +23,21 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.mulitet4.truedo"
+      "package": "com.mulitet4.wikirandom"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-font"
     ],
     "extra": {
       "router": {
         "origin": false
       },
       "eas": {
-        "projectId": "553c2e1d-6f40-4af4-a474-964f5f285644"
+        "projectId": "89ffe79d-9ad2-4642-a877-cca153e5a789"
       }
     }
   }
