@@ -1,10 +1,7 @@
-## References
-[Expo Docs](https://docs.expo.dev/)
+## Wiki Random
 
-## Run
-- `npm i` 
-- `npm run android` 
-- `npx expo install --fix`
+Gives you a random list of wikipedia articles everytime you pull down to refresh! Just a little fun project that I had first started in flutter that I revamped into React Native + Expo! [Download Here](https://github.com/mulitet4/Wiki-Random/releases/download/latest/wiki-random_v1.0.0.apk)
 
-## Build
-Get APK build - `eas build --platform android --profile local`
+Screenshot of the app:
+
+![Alt text](assets/wiki-random.jpg?raw=true 'Title')
