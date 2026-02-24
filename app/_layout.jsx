@@ -1,4 +1,6 @@
-import { Slot, SplashScreen } from "expo-router";
+import { Slot, SplashScreen, Tabs } from "expo-router";
+// icons for tabs
+import { MaterialIcons } from "@expo/vector-icons";
 import { useFonts, fontError } from "expo-font";
 import { useEffect } from "react";
 
@@ -23,8 +25,49 @@ export default function () {
     return null;
   }
 
-  // Render the children routes now that all the assets are loaded.  Nativewind
-  // does not require any special provider – styling is applied via the Babel
-  // preset and the `className` props on React Native components.
-  return <Slot />;
+  // Render the bottom tab navigator once fonts/splash are ready.  Expo Router
+  // provides a simple <Tabs> component that maps to the file system; we also
+  // declare the three tabs explicitly so we can customize their titles/icons
+  // later if desired.
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: "black",
+          borderTopColor: "#111",
+        },
+        tabBarActiveTintColor: "white",
+        tabBarInactiveTintColor: "#888",
+      }}
+    >
+      <Tabs.Screen
+        name='index'
+        options={{
+          title: "Home",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name='home' size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name='favorites'
+        options={{
+          title: "Favorites",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name='favorite' size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name='settings'
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name='settings' size={size} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
+  );
 }
