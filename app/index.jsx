@@ -138,18 +138,8 @@ export default function App() {
             const isLast = i === data.length - 1;
             const already = favorites.find((f) => f.id === page.id);
             return (
-              <Pressable
+              <View
                 key={page.id}
-                onPress={() => {
-                  Linking.canOpenURL(`http://en.wikipedia.org/?curid=${page.id}`).then((supported) => {
-                    if (supported) {
-                      Linking.openURL(`http://en.wikipedia.org/?curid=${page.id}`);
-                    } else {
-                      console.log("Don't know how to open URI");
-                    }
-                  });
-                }}
-                android_ripple={{ color: "rgba(255,255,255,0.3)", borderless: false }}
                 style={{
                   borderWidth: 1,
                   borderColor: "#27272A",
@@ -158,26 +148,43 @@ export default function App() {
                   overflow: "hidden",
                 }}
               >
-                <View style={{ paddingTop: 12, paddingBottom: 16, paddingHorizontal: 16 }}>
-                  <Pressable
-                    onPress={() => handleToggleFavorite({ id: page.id, title: page.title })}
-                    android_ripple={{ color: "rgba(255,255,255,0.2)", borderless: true }}
-                    style={{ position: "absolute", top: 8, right: 8, zIndex: 10, padding: 4 }}
-                  >
-                    <MaterialIcons
-                      name={already ? "bookmark" : "bookmark-border"}
-                      size={24}
-                      color={already ? "white" : "#888"}
-                    />
-                  </Pressable>
+                <Pressable
+                  onPress={() => {
+                    Linking.canOpenURL(`http://en.wikipedia.org/?curid=${page.id}`).then((supported) => {
+                      if (supported) {
+                        Linking.openURL(`http://en.wikipedia.org/?curid=${page.id}`);
+                      } else {
+                        console.log("Don't know how to open URI");
+                      }
+                    });
+                  }}
+                  android_ripple={{ color: "rgba(255,255,255,0.3)", borderless: false, foreground: true }}
+                  style={{
+                    paddingTop: 12,
+                    paddingBottom: 16,
+                    paddingHorizontal: 16,
+                    flex: 1,
+                  }}
+                >
                   <Text style={{ fontFamily: "Archivo", color: "white", fontSize: 18 }} className="text-white mb-1 text-lg">
                     {page.title}
                   </Text>
                   <Text style={{ fontFamily: "Archivo", color: "white", fontSize: 12 }} className="text-white text-xs">
                     Page ID: {page.id}
                   </Text>
-                </View>
-              </Pressable>
+                </Pressable>
+                <Pressable
+                  onPress={() => handleToggleFavorite({ id: page.id, title: page.title })}
+                  android_ripple={{ color: "rgba(255,255,255,0.2)", borderless: true }}
+                  style={{ position: "absolute", top: 8, right: 8, zIndex: 10, padding: 4 }}
+                >
+                  <MaterialIcons
+                    name={already ? "bookmark" : "bookmark-border"}
+                    size={24}
+                    color={already ? "white" : "#888"}
+                  />
+                </Pressable>
+              </View>
             );
           })}
         </ScrollView>

@@ -78,51 +78,48 @@ export default function Favorites() {
                   android_ripple={{
                     color: "rgba(255,255,255,0.3)",
                     borderless: false,
+                    foreground: true,
                   }}
-                  style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.7 : 1 }]}
+                  style={{
+                    paddingTop: 12,
+                    paddingBottom: 16,
+                    paddingHorizontal: 16,
+                    flex: 1,
+                  }}
                 >
-                  <View
-                    className='pt-3 pb-4 px-4'
+                  <Text
                     style={{
-                      paddingTop: 12,
-                      paddingBottom: 16,
-                      paddingHorizontal: 16,
+                      fontFamily: "Archivo",
+                      color: "white",
+                      fontSize: 18,
                     }}
+                    className='text-white mb-1 text-lg'
                   >
-                    {/* remove bookmark toggle */}
-                    <Pressable
-                      onPress={() => handleRemove(page)}
-                      style={{
-                        position: 'absolute',
-                        top: 8,
-                        right: 8,
-                        zIndex: 10,
-                        padding: 4,
-                      }}
-                    >
-                      <MaterialIcons name="bookmark" size={24} color="white" />
-                    </Pressable>
-                    <Text
-                      style={{
-                        fontFamily: "Archivo",
-                        color: "white",
-                        fontSize: 18,
-                      }}
-                      className='text-white mb-1 text-lg'
-                    >
-                      {page.title}
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: "Archivo",
-                        color: "white",
-                        fontSize: 12,
-                      }}
-                      className='text-white text-xs'
-                    >
-                      Page ID: {page.id}
-                    </Text>
-                  </View>
+                    {page.title}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "Archivo",
+                      color: "white",
+                      fontSize: 12,
+                    }}
+                    className='text-white text-xs'
+                  >
+                    Page ID: {page.id}
+                  </Text>
+                </Pressable>
+                {/* remove bookmark toggle */}
+                <Pressable
+                  onPress={() => handleRemove(page)}
+                  style={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    zIndex: 10,
+                    padding: 4,
+                  }}
+                >
+                  <MaterialIcons name="bookmark" size={24} color="white" />
                 </Pressable>
               </View>
             );

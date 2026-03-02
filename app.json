@@ -23,7 +23,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.mulitet4.wikirandom"
+      "package": "com.aaryanbuilds.wikirandom"
     },
     "web": {
       "favicon": "./assets/favicon.png"
