@@ -6,7 +6,8 @@ export async function loadFavorites() {
   try {
     const json = await AsyncStorage.getItem(FAVORITES_KEY);
     if (json) {
-      return JSON.parse(json);
+      const parsed = JSON.parse(json);
+      return Array.isArray(parsed) ? parsed : [];
     }
   } catch (err) {
     console.error('Failed to load favorites', err);
@@ -44,6 +45,7 @@ export async function removeFavorite(id) {
 // `saveArticleLimit()` to update it.
 
 const ARTICLE_LIMIT_KEY = '@wiki_random_article_limit';
+const SETTINGS_CHANGED_KEY = '@wiki_random_settings_changed';
 
 /**
  * Load the stored article limit, defaulting to `40` if nothing is saved or on
@@ -75,5 +77,40 @@ export async function saveArticleLimit(limit) {
     await AsyncStorage.setItem(ARTICLE_LIMIT_KEY, String(clamped));
   } catch (err) {
     console.error('Failed to save article limit', err);
+  }
+}
+
+/**
+ * Mark that settings have changed and articles should be refreshed
+ */
+export async function markSettingsChanged() {
+  try {
+    await AsyncStorage.setItem(SETTINGS_CHANGED_KEY, 'true');
+  } catch (err) {
+    console.error('Failed to mark settings changed', err);
+  }
+}
+
+/**
+ * Check if settings have changed since last article refresh
+ */
+export async function hasSettingsChanged() {
+  try {
+    const value = await AsyncStorage.getItem(SETTINGS_CHANGED_KEY);
+    return value === 'true';
+  } catch (err) {
+    console.error('Failed to check settings changed', err);
+    return false;
+  }
+}
+
+/**
+ * Clear the settings changed flag (called after articles are refreshed)
+ */
+export async function clearSettingsChanged() {
+  try {
+    await AsyncStorage.removeItem(SETTINGS_CHANGED_KEY);
+  } catch (err) {
+    console.error('Failed to clear settings changed', err);
   }
 }

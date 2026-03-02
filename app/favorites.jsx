@@ -12,8 +12,14 @@ export default function Favorites() {
   useFocusEffect(
     React.useCallback(() => {
       (async () => {
-        const { loadFavorites } = await import("../utils/storage");
-        setItems(await loadFavorites());
+        try {
+          const { loadFavorites } = await import("../utils/storage");
+          const favs = await loadFavorites().catch(() => []);
+          setItems(Array.isArray(favs) ? favs : []);
+        } catch (error) {
+          console.error('Error loading favorites:', error);
+          setItems([]);
+        }
       })();
     }, []),
   );
@@ -21,19 +27,29 @@ export default function Favorites() {
   const [snack, setSnack] = React.useState({ visible: false, message: "", actionText: null, onAction: null });
 
   const handleRemove = async (item) => {
-    const { removeFavorite } = await import("../utils/storage");
-    await removeFavorite(item.id);
-    setItems((prev) => prev.filter((f) => f.id !== item.id));
-    setSnack({
-      visible: true,
-      message: "Removed from favorites",
-      actionText: "Undo",
-      onAction: async () => {
-        const { addFavorite } = await import("../utils/storage");
-        await addFavorite(item);
-        setItems((prev) => [...prev, item]);
-      },
-    });
+    try {
+      if (!item || !item.id) return;
+      
+      const { removeFavorite } = await import("../utils/storage");
+      await removeFavorite(item.id);
+      setItems((prev) => prev.filter((f) => f.id !== item.id));
+      setSnack({
+        visible: true,
+        message: "Removed from favorites",
+        actionText: "Undo",
+        onAction: async () => {
+          try {
+            const { addFavorite } = await import("../utils/storage");
+            await addFavorite(item);
+            setItems((prev) => [...prev, item]);
+          } catch (error) {
+            console.error('Error undoing remove:', error);
+          }
+        },
+      });
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+    }
   };
 
   return (
@@ -47,7 +63,7 @@ export default function Favorites() {
             No favorites yet.
           </Text>
         ) : (
-          items.map((page, i) => {
+          items.filter(page => page && page.id && page.title).map((page, i) => {
             const isLast = i === items.length - 1;
             return (
               <View

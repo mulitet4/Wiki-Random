@@ -47,21 +47,49 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
-      const { loadFavorites, loadArticleLimit } = await import("../utils/storage");
-      const [favs, savedLimit] = await Promise.all([loadFavorites(), loadArticleLimit()]);
-      setFavorites(favs);
-      setArticleLimit(savedLimit);
-      getWikiArticles(savedLimit);
+      try {
+        const { loadFavorites, loadArticleLimit } = await import("../utils/storage");
+        const [favs, savedLimit] = await Promise.all([
+          loadFavorites().catch(() => []),
+          loadArticleLimit().catch(() => 40)
+        ]);
+        setFavorites(Array.isArray(favs) ? favs : []);
+        setArticleLimit(typeof savedLimit === 'number' ? savedLimit : 40);
+        await getWikiArticles(savedLimit);
+      } catch (error) {
+        console.error('Error initializing app:', error);
+        setFavorites([]);
+        setArticleLimit(40);
+        await getWikiArticles(40);
+      }
     })();
   }, []);
 
   useFocusEffect(
     React.useCallback(() => {
       (async () => {
-        const { loadArticleLimit } = await import("../utils/storage");
-        const saved = await loadArticleLimit();
-        setArticleLimit(saved);
-        getWikiArticles(saved);
+        try {
+          const { loadFavorites, loadArticleLimit, hasSettingsChanged, clearSettingsChanged } = await import("../utils/storage");
+          
+          // Always refresh favorites
+          const favs = await loadFavorites().catch(() => []);
+          setFavorites(Array.isArray(favs) ? favs : []);
+          
+          const saved = await loadArticleLimit().catch(() => 40);
+          const settingsChanged = await hasSettingsChanged();
+          
+          // Only refresh articles if settings changed
+          if (settingsChanged) {
+            setArticleLimit(saved);
+            await getWikiArticles(saved);
+            await clearSettingsChanged();
+          } else {
+            // Just update the limit without fetching new articles
+            setArticleLimit(saved);
+          }
+        } catch (error) {
+          console.error('Error on focus:', error);
+        }
       })();
     }, []),
   );
@@ -85,8 +113,10 @@ export default function App() {
         throw new Error("Failed to fetch wiki articles");
       }
       const json = JSON.parse(text);
-      const randoms = (json.query && json.query.random) || [];
-      const finalData = randoms.map((p) => ({ id: p.id, title: p.title }));
+      const randoms = (json?.query?.random) || [];
+      const finalData = randoms
+        .filter(p => p && p.id && p.title)
+        .map((p) => ({ id: p.id, title: p.title }));
       setData(finalData);
     } catch (err) {
       console.error("Error fetching random wiki pages", err);
@@ -97,27 +127,33 @@ export default function App() {
   }
 
   const handleToggleFavorite = async (item) => {
-    const exists = favorites.find((f) => f.id === item.id);
-    if (exists) {
-      const { removeFavorite } = await import("../utils/storage");
-      await removeFavorite(item.id);
-      setFavorites((prev) => prev.filter((f) => f.id !== item.id));
-      setSnack({
-        visible: true,
-        message: "Removed from favorites",
-        actionText: "Undo",
-        onAction: () => handleToggleFavorite(item),
-      });
-    } else {
-      const { addFavorite } = await import("../utils/storage");
-      await addFavorite(item);
-      setFavorites((prev) => [...prev, item]);
-      setSnack({
-        visible: true,
-        message: "Saved",
-        actionText: null,
-        onAction: null,
-      });
+    try {
+      if (!item || !item.id || !item.title) return;
+      
+      const exists = favorites.find((f) => f.id === item.id);
+      if (exists) {
+        const { removeFavorite } = await import("../utils/storage");
+        await removeFavorite(item.id);
+        setFavorites((prev) => prev.filter((f) => f.id !== item.id));
+        setSnack({
+          visible: true,
+          message: "Removed from favorites",
+          actionText: "Undo",
+          onAction: () => handleToggleFavorite(item),
+        });
+      } else {
+        const { addFavorite } = await import("../utils/storage");
+        await addFavorite(item);
+        setFavorites((prev) => [...prev, item]);
+        setSnack({
+          visible: true,
+          message: "Saved",
+          actionText: null,
+          onAction: null,
+        });
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
   };
 
@@ -134,9 +170,9 @@ export default function App() {
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 0 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-          {data.map((page, i) => {
+          {data.filter(page => page && page.id && page.title).map((page, i) => {
             const isLast = i === data.length - 1;
-            const already = favorites.find((f) => f.id === page.id);
+            const already = favorites.find((f) => f && f.id === page.id);
             return (
               <View
                 key={page.id}

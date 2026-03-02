@@ -1,21 +1,23 @@
 import { View, Text, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 // slider component is provided by the community package
 import Slider from '@react-native-community/slider';
 
 export default function Settings() {
-  const [limit, setLimit] = React.useState(40);
-  const [inputValue, setInputValue] = React.useState('40');
+  const [limit, setLimit] = useState(40);
+  const [inputValue, setInputValue] = useState('40');
+  const [initialLimit, setInitialLimit] = useState(40);
 
   // load saved setting on mount
-  React.useEffect(() => {
+  useEffect(() => {
     (async () => {
       const { loadArticleLimit } = await import('../utils/storage');
       const saved = await loadArticleLimit();
       setLimit(saved);
       setInputValue(String(saved));
+      setInitialLimit(saved);
     })();
   }, []);
 
@@ -29,16 +31,26 @@ export default function Settings() {
     const numeric = Math.min(40, Math.max(1, Number(inputValue) || 1));
     setLimit(numeric);
     setInputValue(String(numeric));
-    const { saveArticleLimit } = await import('../utils/storage');
+    const { saveArticleLimit, markSettingsChanged } = await import('../utils/storage');
     await saveArticleLimit(numeric);
+    
+    // Only mark as changed if the value actually changed
+    if (numeric !== initialLimit) {
+      await markSettingsChanged();
+    }
   };
 
   const onSliderChange = async (value) => {
     // Slider changes are validated immediately
     setLimit(value);
     setInputValue(String(value));
-    const { saveArticleLimit } = await import('../utils/storage');
+    const { saveArticleLimit, markSettingsChanged } = await import('../utils/storage');
     await saveArticleLimit(value);
+    
+    // Only mark as changed if the value actually changed
+    if (value !== initialLimit) {
+      await markSettingsChanged();
+    }
   };
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'black', padding: 16 }}>
