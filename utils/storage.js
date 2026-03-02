@@ -1,6 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const FAVORITES_KEY = '@wiki_random_favorites';
+const FAVORITES_KEY = "@wiki_random_favorites";
 
 export async function loadFavorites() {
   try {
@@ -10,7 +10,7 @@ export async function loadFavorites() {
       return Array.isArray(parsed) ? parsed : [];
     }
   } catch (err) {
-    console.error('Failed to load favorites', err);
+    console.error("Failed to load favorites", err);
   }
   return [];
 }
@@ -19,7 +19,7 @@ export async function saveFavorites(favorites) {
   try {
     await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
   } catch (err) {
-    console.error('Failed to save favorites', err);
+    console.error("Failed to save favorites", err);
   }
 }
 
@@ -44,11 +44,11 @@ export async function removeFavorite(id) {
 // Consumers should call `loadArticleLimit()` to retrieve the current value and
 // `saveArticleLimit()` to update it.
 
-const ARTICLE_LIMIT_KEY = '@wiki_random_article_limit';
-const SETTINGS_CHANGED_KEY = '@wiki_random_settings_changed';
+const ARTICLE_LIMIT_KEY = "@wiki_random_article_limit";
+const SETTINGS_CHANGED_KEY = "@wiki_random_settings_changed";
 
 /**
- * Load the stored article limit, defaulting to `40` if nothing is saved or on
+ * Load the stored article limit, defaulting to `15` if nothing is saved or on
  * error.
  */
 export async function loadArticleLimit() {
@@ -57,26 +57,26 @@ export async function loadArticleLimit() {
     if (value !== null) {
       const parsed = parseInt(value, 10);
       if (!isNaN(parsed)) {
-        // clamp between 1 and 40 just in case
-        return Math.min(40, Math.max(1, parsed));
+        // clamp between 1 and 15 just in case
+        return Math.min(15, Math.max(1, parsed));
       }
     }
   } catch (err) {
-    console.error('Failed to load article limit', err);
+    console.error("Failed to load article limit", err);
   }
-  return 40;
+  return 15;
 }
 
 /**
  * Save a new article limit.  The value will be clamped to the allowed range
- * (1–40) before persisting.
+ * (1–15) before persisting.
  */
 export async function saveArticleLimit(limit) {
   try {
-    const clamped = Math.min(40, Math.max(1, limit));
+    const clamped = Math.min(15, Math.max(1, limit));
     await AsyncStorage.setItem(ARTICLE_LIMIT_KEY, String(clamped));
   } catch (err) {
-    console.error('Failed to save article limit', err);
+    console.error("Failed to save article limit", err);
   }
 }
 
@@ -85,9 +85,9 @@ export async function saveArticleLimit(limit) {
  */
 export async function markSettingsChanged() {
   try {
-    await AsyncStorage.setItem(SETTINGS_CHANGED_KEY, 'true');
+    await AsyncStorage.setItem(SETTINGS_CHANGED_KEY, "true");
   } catch (err) {
-    console.error('Failed to mark settings changed', err);
+    console.error("Failed to mark settings changed", err);
   }
 }
 
@@ -97,9 +97,9 @@ export async function markSettingsChanged() {
 export async function hasSettingsChanged() {
   try {
     const value = await AsyncStorage.getItem(SETTINGS_CHANGED_KEY);
-    return value === 'true';
+    return value === "true";
   } catch (err) {
-    console.error('Failed to check settings changed', err);
+    console.error("Failed to check settings changed", err);
     return false;
   }
 }
@@ -111,6 +111,6 @@ export async function clearSettingsChanged() {
   try {
     await AsyncStorage.removeItem(SETTINGS_CHANGED_KEY);
   } catch (err) {
-    console.error('Failed to clear settings changed', err);
+    console.error("Failed to clear settings changed", err);
   }
 }

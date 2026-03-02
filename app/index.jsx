@@ -6,7 +6,7 @@ import {
   RefreshControl,
   Linking,
 } from "react-native";
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useEffect, useState } from "react";
 import { useFocusEffect } from "expo-router";
@@ -35,8 +35,13 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
   const [favorites, setFavorites] = useState([]);
-  const [snack, setSnack] = useState({ visible: false, message: "", actionText: null, onAction: null });
-  const [articleLimit, setArticleLimit] = useState(40);
+  const [snack, setSnack] = useState({
+    visible: false,
+    message: "",
+    actionText: null,
+    onAction: null,
+  });
+  const [articleLimit, setArticleLimit] = useState(15);
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = React.useCallback(async () => {
@@ -48,16 +53,17 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
-        const { loadFavorites, loadArticleLimit } = await import("../utils/storage");
+        const { loadFavorites, loadArticleLimit } =
+          await import("../utils/storage");
         const [favs, savedLimit] = await Promise.all([
           loadFavorites().catch(() => []),
-          loadArticleLimit().catch(() => 40)
+          loadArticleLimit().catch(() => 40),
         ]);
         setFavorites(Array.isArray(favs) ? favs : []);
-        setArticleLimit(typeof savedLimit === 'number' ? savedLimit : 40);
+        setArticleLimit(typeof savedLimit === "number" ? savedLimit : 40);
         await getWikiArticles(savedLimit);
       } catch (error) {
-        console.error('Error initializing app:', error);
+        console.error("Error initializing app:", error);
         setFavorites([]);
         setArticleLimit(40);
         await getWikiArticles(40);
@@ -69,15 +75,20 @@ export default function App() {
     React.useCallback(() => {
       (async () => {
         try {
-          const { loadFavorites, loadArticleLimit, hasSettingsChanged, clearSettingsChanged } = await import("../utils/storage");
-          
+          const {
+            loadFavorites,
+            loadArticleLimit,
+            hasSettingsChanged,
+            clearSettingsChanged,
+          } = await import("../utils/storage");
+
           // Always refresh favorites
           const favs = await loadFavorites().catch(() => []);
           setFavorites(Array.isArray(favs) ? favs : []);
-          
+
           const saved = await loadArticleLimit().catch(() => 40);
           const settingsChanged = await hasSettingsChanged();
-          
+
           // Only refresh articles if settings changed
           if (settingsChanged) {
             setArticleLimit(saved);
@@ -88,7 +99,7 @@ export default function App() {
             setArticleLimit(saved);
           }
         } catch (error) {
-          console.error('Error on focus:', error);
+          console.error("Error on focus:", error);
         }
       })();
     }, []),
@@ -97,13 +108,15 @@ export default function App() {
   async function getWikiArticles(overrideLimit) {
     try {
       setLoading(true);
-      const limit = typeof overrideLimit === "number" ? overrideLimit : articleLimit;
+      const limit =
+        typeof overrideLimit === "number" ? overrideLimit : articleLimit;
       const url =
         `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*` +
         `&list=random&rnlimit=${limit}&rnnamespace=0&formatversion=2`;
       const res = await fetch(url, {
         headers: {
-          "User-Agent": "WikiRandom/1.0 (https://github.com/mulitet4/Wiki-Random)",
+          "User-Agent":
+            "WikiRandom/1.0 (https://github.com/mulitet4/Wiki-Random)",
           Accept: "application/json",
         },
       });
@@ -113,10 +126,39 @@ export default function App() {
         throw new Error("Failed to fetch wiki articles");
       }
       const json = JSON.parse(text);
-      const randoms = (json?.query?.random) || [];
+      const randoms = json?.query?.random || [];
+
+      // Fetch descriptions for all articles
+      const pageIds = randoms.map((p) => p.id).filter((id) => id);
+      const descriptionUrl =
+        `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*` +
+        `&pageids=${pageIds.join("|")}&prop=extracts&explaintext=true&exintro=true&formatversion=2`;
+
+      const descRes = await fetch(descriptionUrl, {
+        headers: {
+          "User-Agent":
+            "WikiRandom/1.0 (https://github.com/mulitet4/Wiki-Random)",
+          Accept: "application/json",
+        },
+      });
+      const descJson = await descRes.json();
+      const descriptionMap = {};
+      const pages = descJson?.query?.pages || [];
+      pages.forEach((page) => {
+        if (page && page.pageid && page.extract) {
+          const words = page.extract.split(/\s+/).slice(0, 20).join(" ");
+          descriptionMap[page.pageid] =
+            words + (page.extract.split(/\s+/).length > 20 ? "..." : "");
+        }
+      });
+
       const finalData = randoms
-        .filter(p => p && p.id && p.title)
-        .map((p) => ({ id: p.id, title: p.title }));
+        .filter((p) => p && p.id && p.title)
+        .map((p) => ({
+          id: p.id,
+          title: p.title,
+          description: descriptionMap[p.id] || "No description available",
+        }));
       setData(finalData);
     } catch (err) {
       console.error("Error fetching random wiki pages", err);
@@ -129,7 +171,7 @@ export default function App() {
   const handleToggleFavorite = async (item) => {
     try {
       if (!item || !item.id || !item.title) return;
-      
+
       const exists = favorites.find((f) => f.id === item.id);
       if (exists) {
         const { removeFavorite } = await import("../utils/storage");
@@ -153,76 +195,130 @@ export default function App() {
         });
       }
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      console.error("Error toggling favorite:", error);
     }
   };
 
   return (
-    <SafeAreaView
-      edges={["top"]}
-      style={{ flex: 1, backgroundColor: "black" }}
-    >
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: "black" }}>
       {loading ? (
         <Loader />
       ) : (
         <ScrollView
-          style={{ backgroundColor: "transparent", paddingHorizontal: 16, flex: 1 }}
+          style={{
+            backgroundColor: "transparent",
+            paddingHorizontal: 16,
+            flex: 1,
+          }}
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 0 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
-          {data.filter(page => page && page.id && page.title).map((page, i) => {
-            const isLast = i === data.length - 1;
-            const already = favorites.find((f) => f && f.id === page.id);
-            return (
-              <View
-                key={page.id}
-                style={{
-                  borderWidth: 1,
-                  borderColor: "#27272A",
-                  marginBottom: isLast ? 0 : 12,
-                  borderRadius: 8,
-                  overflow: "hidden",
-                }}
-              >
-                <Pressable
-                  onPress={() => {
-                    Linking.canOpenURL(`http://en.wikipedia.org/?curid=${page.id}`).then((supported) => {
-                      if (supported) {
-                        Linking.openURL(`http://en.wikipedia.org/?curid=${page.id}`);
-                      } else {
-                        console.log("Don't know how to open URI");
-                      }
-                    });
-                  }}
-                  android_ripple={{ color: "rgba(255,255,255,0.3)", borderless: false, foreground: true }}
+          {data
+            .filter((page) => page && page.id && page.title)
+            .map((page, i) => {
+              const isLast = i === data.length - 1;
+              const already = favorites.find((f) => f && f.id === page.id);
+              return (
+                <View
+                  key={page.id}
                   style={{
-                    paddingTop: 12,
-                    paddingBottom: 16,
-                    paddingHorizontal: 16,
-                    flex: 1,
+                    borderWidth: 1,
+                    borderColor: "#27272A",
+                    marginBottom: isLast ? 0 : 12,
+                    borderRadius: 8,
+                    overflow: "hidden",
                   }}
                 >
-                  <Text style={{ fontFamily: "Archivo", color: "white", fontSize: 18 }} className="text-white mb-1 text-lg">
-                    {page.title}
-                  </Text>
-                  <Text style={{ fontFamily: "Archivo", color: "white", fontSize: 12 }} className="text-white text-xs">
-                    Page ID: {page.id}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => handleToggleFavorite({ id: page.id, title: page.title })}
-                  android_ripple={{ color: "rgba(255,255,255,0.2)", borderless: true }}
-                  style={{ position: "absolute", top: 8, right: 8, zIndex: 10, padding: 4 }}
-                >
-                  <MaterialIcons
-                    name={already ? "bookmark" : "bookmark-border"}
-                    size={24}
-                    color={already ? "white" : "#888"}
-                  />
-                </Pressable>
-              </View>
-            );
-          })}
+                  <Pressable
+                    onPress={() => {
+                      Linking.canOpenURL(
+                        `http://en.wikipedia.org/?curid=${page.id}`,
+                      ).then((supported) => {
+                        if (supported) {
+                          Linking.openURL(
+                            `http://en.wikipedia.org/?curid=${page.id}`,
+                          );
+                        } else {
+                          console.log("Don't know how to open URI");
+                        }
+                      });
+                    }}
+                    android_ripple={{
+                      color: "rgba(255,255,255,0.3)",
+                      borderless: false,
+                      foreground: true,
+                    }}
+                    style={{
+                      paddingTop: 12,
+                      paddingBottom: 16,
+                      paddingHorizontal: 16,
+                      flex: 1,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: "Archivo",
+                        color: "white",
+                        fontSize: 18,
+                      }}
+                      className='text-white mb-1 text-lg'
+                    >
+                      {page.title}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Archivo",
+                        color: "#999",
+                        fontSize: 13,
+                        marginBottom: 8,
+                        lineHeight: 18,
+                      }}
+                      className='text-gray-400'
+                    >
+                      {page.description}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Archivo",
+                        color: "white",
+                        fontSize: 12,
+                      }}
+                      className='text-white text-xs'
+                    >
+                      Page ID: {page.id}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() =>
+                      handleToggleFavorite({
+                        id: page.id,
+                        title: page.title,
+                        description: page.description,
+                      })
+                    }
+                    android_ripple={{
+                      color: "rgba(255,255,255,0.2)",
+                      borderless: true,
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      zIndex: 10,
+                      padding: 4,
+                    }}
+                  >
+                    <MaterialIcons
+                      name={already ? "bookmark" : "bookmark-border"}
+                      size={24}
+                      color={already ? "white" : "#888"}
+                    />
+                  </Pressable>
+                </View>
+              );
+            })}
         </ScrollView>
       )}
       <Snackbar
